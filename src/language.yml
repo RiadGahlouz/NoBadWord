@@ -1,0 +1,4 @@
+#Default Messages [EN]
+ServerName: UnexCraft
+#Here you can customize messages (and translate them)
+NoPermission: &cYou don't have permission to perform this command!

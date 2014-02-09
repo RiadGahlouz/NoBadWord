@@ -24,12 +24,11 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 
 public class Main extends JavaPlugin implements Listener{
 	public static Logger logger;
 	public static Main plugin;
-	public String UnexCraftMessage = ChatColor.RED+"["+ChatColor.DARK_AQUA+getCustomConfig().getString("ServerName")+ChatColor.RED+"] ";
+	public String UnexCraftMessage = ChatColor.RED+"["+ChatColor.DARK_AQUA+getCustomConfig("language.yml").getString("ServerName")+ChatColor.RED+"] ";
 	public static String AdminMessage = ChatColor.RED+"["+ChatColor.DARK_AQUA+"Admin"+ChatColor.RED+"] ";
 	//Config Files
 	private FileConfiguration customConfig = null;
@@ -45,9 +44,12 @@ public class Main extends JavaPlugin implements Listener{
 		pm.addPermission(new Permissions().UnexcanListBadWord);
 		pm.addPermission(new Permissions().UnexcanSwear);
                 //pm.addPermission(new Permissions().UnexcanReloadNBW);
-		reloadCustomConfig();
-		getCustomConfig().options().copyDefaults(true);
-		saveCustomConfig();
+		reloadCustomConfig("badwords.yml");
+		getCustomConfig("badwords.yml").options().copyDefaults(true);
+		saveCustomConfig("badwords.yml");
+                reloadCustomConfig("language.yml");
+                getCustomConfig("language.yml").options().copyDefaults(true);
+                saveCustomConfig("language.yml");
 		//saveDefaultConfig();
 		logger.log(Level.INFO, "{0} Version {1} is ON!", new Object[]{pdffile.getName(), pdffile.getVersion()});
 	}
@@ -58,7 +60,8 @@ public class Main extends JavaPlugin implements Listener{
 		getServer().getPluginManager().removePermission(new Permissions().UnexcanListBadWord);
 		getServer().getPluginManager().removePermission(new Permissions().UnexcanSwear);
                 //getServer().getPluginManager().removePermission(new Permissions().UnexcanReloadNBW);
-		saveCustomConfig();
+		saveCustomConfig("badwords.yml");
+                saveCustomConfig("language.yml");
 		logger.log(Level.INFO, "{0} is OFF", pdffile.getName());
 	}
 	@Override
@@ -89,20 +92,20 @@ public class Main extends JavaPlugin implements Listener{
 						player.sendMessage(ChatColor.RED + "Usage: /badword <word>");
 					}else if(args.length == 1){
 						@SuppressWarnings("unchecked")
-						List<String> confList = (List<String>)getCustomConfig().getList("Badwords");
+						List<String> confList = (List<String>)getCustomConfig("badwords.yml").getList("Badwords");
 						if(confList.contains(args[0])){
 							player.sendMessage(AdminMessage + ChatColor.GREEN +"Word \""+ChatColor.YELLOW+args[0]+ChatColor.GREEN +"\" " +ChatColor.RED+"Already exists"+ChatColor.GREEN +" in BadWord List!");
 						}else{
 							confList.add(args[0].toLowerCase());
-							getCustomConfig().set("Badwords", confList);
-							saveCustomConfig();
+							getCustomConfig("badwords.yml").set("Badwords", confList);
+							saveCustomConfig("badwords.yml");
 							player.sendMessage(AdminMessage + ChatColor.GREEN +"Word \""+ChatColor.YELLOW+args[0]+ChatColor.GREEN +"\" has been added to BadWord List!");
 						}
 					}else{
 						player.sendMessage(ChatColor.RED + "Usage: /badword <word>");
 					}
 				}else{
-					player.sendMessage(UnexCraftMessage + ChatColor.RED + "You don't have permission to perform this command!");
+					player.sendMessage(UnexCraftMessage + getCustomConfig("language.yml").getString("NoPermission"));
 				}
 			}else{
                             Bukkit.getConsoleSender().sendMessage(MessageFormat.format("{0}You must execute this commande {1}In-Game!",ChatColor.GREEN,ChatColor.RED));
@@ -116,7 +119,7 @@ public class Main extends JavaPlugin implements Listener{
 				Player player = (Player) sender;
 				if(sender.hasPermission(new Permissions().UnexcanListBadWord)){
 					if(args.length == 0){
-						player.sendMessage(getCustomConfig().getList("Badwords").toString());					}else{
+						player.sendMessage(getCustomConfig("badwords.yml").getList("Badwords").toString());					}else{
 						player.sendMessage(ChatColor.RED + "No args needed! Usage: /badwords");
 					}
 				}else{
@@ -135,7 +138,7 @@ public class Main extends JavaPlugin implements Listener{
     @EventHandler(priority = EventPriority.HIGH)
 	public void onPlayerChat(final AsyncPlayerChatEvent event){
             if(!event.getPlayer().hasPermission(new Permissions().UnexcanSwear)){
-                List<String> badwords  =(List<String>) (getCustomConfig().getList("Badwords"));
+                List<String> badwords  =(List<String>) (getCustomConfig("badwords.yml").getList("Badwords"));
                 for (String badword : badwords) {
                     String playerMessage = event.getMessage().toLowerCase();
                     if(playerMessage.matches("(.* )?"+badword+"( .*)?")){
@@ -149,8 +152,8 @@ public class Main extends JavaPlugin implements Listener{
                         getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable(){
                         @Override
                         public void run(){
-                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "jail "+event.getPlayer().getName() + " jail 60");
-                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mute "+event.getPlayer().getName()+" 90");
+                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "jail "+event.getPlayer().getName() + " jail "+getCustomConfig("badwords.yml").getInt("JailTime"));
+                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mute "+event.getPlayer().getName()+" "+getCustomConfig("badwords.yml").getInt("MuteTime"));
                         }
                         },10L);                        
                         break;
@@ -162,45 +165,44 @@ public class Main extends JavaPlugin implements Listener{
         /*
 	 * Config Methods
 	 */
-	public void reloadCustomConfig() {
+	public void reloadCustomConfig(String confName) {
 	    if (customConfigFile == null) {
-	    customConfigFile = new File(getDataFolder(), "badwords.yml");
+	    customConfigFile = new File(getDataFolder(), confName);
 	    }
 	    customConfig = YamlConfiguration.loadConfiguration(customConfigFile);
 	 
 	    // Look for defaults in the jar
-	    InputStream defConfigStream = this.getResource("badwords.yml");
+	    InputStream defConfigStream = this.getResource(confName);
 	    if (defConfigStream != null) {
 	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
 	        customConfig.setDefaults(defConfig);
 	    }
 	}
 	
-	public FileConfiguration getCustomConfig() {
+	public FileConfiguration getCustomConfig(String confName) {
 	    if (customConfig == null) {
-	        reloadCustomConfig();
+	        reloadCustomConfig(confName);
 	    }
 	    return customConfig;
 	}
 	
-	public void saveCustomConfig() {
+	public void saveCustomConfig(String confName) {
 	    if (customConfig == null || customConfigFile == null) {
 	        return;
 	    }
 	    try {
-	        getCustomConfig().save(customConfigFile);
+	        getCustomConfig(confName).save(customConfigFile);
 	    } catch (IOException ex) {
 	        getLogger().log(Level.SEVERE, "Could not save config to " + customConfigFile, ex);
 	    }
 	}
 	
-        @Override
-	public void saveDefaultConfig() {
+        	public void saveDefaultConfig(String confName) {
 	    if (customConfigFile == null) {
-	        customConfigFile = new File(getDataFolder(), "badwords.yml");
+	        customConfigFile = new File(getDataFolder(), confName);
 	    }
 	    if (!customConfigFile.exists()) {            
-	         plugin.saveResource("badwords.yml", false);
+	         plugin.saveResource(confName, false);
 	     }
 	}
 

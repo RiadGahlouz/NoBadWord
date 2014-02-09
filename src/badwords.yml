@@ -1,6 +1,9 @@
 #Default Bad Words
+#Time bad players should be jailed (in seconds) Default:60
+JailTime: 60
+#Time bas players should be muted (in seconds) Default:90
+MuteTime: 90
 #WARNING: Never add special Characters here or it will corrupt BadWords detection!
-ServerName: UnexCraft
 Badwords:
 - fuck
 - ass
