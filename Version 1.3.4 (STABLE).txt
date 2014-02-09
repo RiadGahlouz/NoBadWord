@@ -1,0 +1,290 @@
+MAIN.JAVA
+========
+
+package ca.unex.unexcraft;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.MessageFormat;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Effect;
+import org.bukkit.Sound;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class Main extends JavaPlugin implements Listener{
+	public static Logger logger;
+	public static Main plugin;
+	public static String UnexCraftMessage = ChatColor.RED+"["+ChatColor.DARK_AQUA+"UnexCraft"+ChatColor.RED+"]";
+	public static String AdminMessage = ChatColor.RED+"["+ChatColor.DARK_AQUA+"Admin"+ChatColor.RED+"]";
+	//public final MyPlayerListener pl = new MyPlayerListener(this);
+	//Config Files
+	private FileConfiguration customConfig = null;
+	private File customConfigFile = null;
+	
+	@Override
+	public void onEnable(){
+		logger = getLogger();
+		PluginDescriptionFile pdffile = this.getDescription();
+		PluginManager pm = this.getServer().getPluginManager();
+		pm.registerEvents(this, this);
+		pm.addPermission(new Permissions().canUseNiveau);
+		pm.addPermission(new Permissions().canWelcome);
+		pm.addPermission(new Permissions().canAddBadWord);
+		pm.addPermission(new Permissions().canListBadWord);
+		pm.addPermission(new Permissions().canUseBadWord);
+		reloadCustomConfig();
+		getCustomConfig().options().copyDefaults(true);
+		saveCustomConfig();
+		//saveDefaultConfig();
+		logger.log(Level.INFO, "{0} Version {1} is ON!", new Object[]{pdffile.getName(), pdffile.getVersion()});
+	}
+	@Override
+	public void onDisable(){
+		PluginDescriptionFile pdffile = this.getDescription();
+		getServer().getPluginManager().removePermission(new Permissions().canUseNiveau);
+		getServer().getPluginManager().removePermission(new Permissions().canWelcome);
+		getServer().getPluginManager().removePermission(new Permissions().canAddBadWord);
+		getServer().getPluginManager().removePermission(new Permissions().canListBadWord);
+		getServer().getPluginManager().removePermission(new Permissions().canUseBadWord);
+		saveCustomConfig();
+		logger.log(Level.INFO, "{0} is OFF", pdffile.getName());
+	}
+	@Override
+	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args){
+			
+		/*
+		 * Command: /niveau <level>
+		 */
+		if(commandLabel.equalsIgnoreCase("niveau")){
+			if(sender instanceof Player){
+				Player player = (Player) sender;
+				if(sender.hasPermission(new Permissions().canUseNiveau)){
+					if(args.length == 1){
+						int lvl = Integer.decode(args[0]);
+						player.sendMessage(AdminMessage + ChatColor.GOLD + "You'ill get what u need.");
+						player.giveExpLevels(lvl);
+						player.sendMessage(AdminMessage + ChatColor.GREEN + "You're now level " + ChatColor.RED + player.getLevel() + ChatColor.GREEN + " !");
+					}else if(args.length < 1 || args.length > 1){
+					player.sendMessage(AdminMessage + ChatColor.RED + "Wrong Args. Type /niveau <level>");
+					}
+				}else{
+					player.sendMessage(UnexCraftMessage + ChatColor.RED + "You don't have permission to perform this command!");
+				}
+			}
+		}
+		/*
+		 * Command: /welcome <player>
+		 */
+		if(commandLabel.equalsIgnoreCase("welcome")){
+			if(sender instanceof Player){
+				Player player = (Player) sender;
+				if(sender.hasPermission(new Permissions().canWelcome)){
+					if(args.length == 0){
+						player.sendMessage(AdminMessage + ChatColor.RED + "Usage: /welcome <player name>");
+					}else if(args.length == 1){
+						Bukkit.broadcastMessage(UnexCraftMessage+ChatColor.GREEN+" Welcome "+ChatColor.YELLOW+args[0]+ChatColor.GREEN+" to UnexCraft!");
+					}else{
+						player.sendMessage(AdminMessage + ChatColor.RED + "Usage: /welcome <player name>");
+					}
+				}else{
+					player.sendMessage(UnexCraftMessage + ChatColor.RED + "You don't have permission to perform this command!");
+				}
+			}
+		}
+		/*
+		 * Command: /badword <badword>
+		 */
+		if(commandLabel.equalsIgnoreCase("badword")){
+			if(sender instanceof Player){
+				Player player = (Player) sender;
+				if(sender.hasPermission(new Permissions().canAddBadWord)){
+					if(args.length == 0){
+						player.sendMessage(ChatColor.RED + "Usage: /badword <word>");
+					}else if(args.length == 1){
+						@SuppressWarnings("unchecked")
+						List<String> confList = (List<String>)getCustomConfig().getList("Badwords");
+						if(confList.contains(args[0])){
+							player.sendMessage(AdminMessage + ChatColor.GREEN +"Word \""+ChatColor.YELLOW+args[0]+ChatColor.GREEN +"\" " +ChatColor.RED+"Already exists"+ChatColor.GREEN +" in BadWord List!");
+						}else{
+							confList.add(args[0].toLowerCase());
+							getCustomConfig().set("Badwords", confList);
+							saveCustomConfig();
+							player.sendMessage(AdminMessage + ChatColor.GREEN +"Word \""+ChatColor.YELLOW+args[0]+ChatColor.GREEN +"\" has been added to BadWord List!");
+						}
+					}else{
+						player.sendMessage(ChatColor.RED + "Usage: /badword <word>");
+					}
+				}else{
+					player.sendMessage(UnexCraftMessage + ChatColor.RED + "You don't have permission to perform this command!");
+				}
+			}
+		}
+		/*
+		 * Comand: /badwords
+		 */
+		if(commandLabel.equalsIgnoreCase("badwords")){
+			if(sender instanceof Player){
+				Player player = (Player) sender;
+				if(sender.hasPermission(new Permissions().canListBadWord)){
+					if(args.length == 0){
+						player.sendMessage(getCustomConfig().getList("Badwords").toString());					}else{
+						player.sendMessage(ChatColor.RED + "No args needed! Usage: /badwords");
+					}
+				}else{
+					player.sendMessage(UnexCraftMessage + ChatColor.RED + "You don't have permission to perform this command!");
+				}
+			}
+		}
+		return false;
+	}
+	/*
+         * HANDLERS
+         */
+
+    @EventHandler
+	public void onPlayerChat(AsyncPlayerChatEvent event){
+		List<String> badwords  =(List<String>) (getCustomConfig().getList("Badwords"));
+                //event.getPlayer().sendMessage(MessageFormat.format("You just said: \"{0}\"",event.getMessage()));
+            for (String badword : badwords) {
+                String playerMessage = event.getMessage().toLowerCase();
+                if(playerMessage.matches("(.* )?"+badword+"( .*)?")){
+                    Player player = event.getPlayer();
+                    event.setCancelled(true);
+                    //player.sendMessage("BADWORD DETECTED!");
+                    player.getWorld().playEffect(player.getLocation(), Effect.MOBSPAWNER_FLAMES,10,10);
+                    player.getWorld().playSound(player.getLocation(), Sound.FIREWORK_LARGE_BLAST2, 100,100);
+                    player.sendMessage(ChatColor.RED + "You're in " + ChatColor.YELLOW + "jail" + ChatColor.RED+". Stop Swearing!");
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "jail "+player.getName() + " jail 60");
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mute "+player.getName()+" 90");
+                    //event.setCancelled(true);
+                    break;
+                }
+            }
+	}
+        
+        /*
+	 * Config Methods
+	 */
+	public void reloadCustomConfig() {
+	    if (customConfigFile == null) {
+	    customConfigFile = new File(getDataFolder(), "badwords.yml");
+	    }
+	    customConfig = YamlConfiguration.loadConfiguration(customConfigFile);
+	 
+	    // Look for defaults in the jar
+	    InputStream defConfigStream = this.getResource("badwords.yml");
+	    if (defConfigStream != null) {
+	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+	        customConfig.setDefaults(defConfig);
+	    }
+	}
+	
+	public FileConfiguration getCustomConfig() {
+	    if (customConfig == null) {
+	        reloadCustomConfig();
+	    }
+	    return customConfig;
+	}
+	
+	public void saveCustomConfig() {
+	    if (customConfig == null || customConfigFile == null) {
+	        return;
+	    }
+	    try {
+	        getCustomConfig().save(customConfigFile);
+	    } catch (IOException ex) {
+	        getLogger().log(Level.SEVERE, "Could not save config to " + customConfigFile, ex);
+	    }
+	}
+	
+        @Override
+	public void saveDefaultConfig() {
+	    if (customConfigFile == null) {
+	        customConfigFile = new File(getDataFolder(), "badwords.yml");
+	    }
+	    if (!customConfigFile.exists()) {            
+	         plugin.saveResource("badwords.yml", false);
+	     }
+	}
+
+}
+
+
+PERMISSIONS.JAVA
+=================
+
+package ca.unex.unexcraft;
+
+import org.bukkit.permissions.Permission;
+
+public class Permissions {
+	//public Permission checkSwear = new Permission("UC.checkSwear");
+	public Permission canWelcome = new Permission("UC.canWelcome");
+	public Permission canUseNiveau = new Permission("UC.canUseNiveau");
+	public Permission canAddBadWord = new Permission("UC.canAddBadWord");
+	public Permission canListBadWord = new Permission("UC.canListBadWord");
+	public Permission canUseBadWord = new Permission("UC.canUseBadWord");
+}
+
+PLUGINS.YML
+============
+
+name: UnexCraft
+main: ca.unex.unexcraft.Main
+version: 1.3.4
+description: >
+             UnexCraft official plugin
+commands:
+  niveau:
+    description: Get levels!
+  welcome:
+    description: Welcome a player to the server :)
+  badword:
+    description: Adds a badword to the blacklist
+  badwords:
+    description: List words you shouldn't say!
+
+BADWORDS.YML
+==============
+#Default Bad Words
+Badwords:
+  - fuck
+  - ass
+  - nigga
+  - nigger
+  - bitch
+  - asshole
+  - motherfucker
+  - modafucka
+  - dick
+  - nigger
+  - slut
+  - cum
+  - biatch
+  - motherfuckin
+  - motherfucking
+  - m0therfucker
+  - m0therfuck3r
+  - motherfuck3r
+
+CONFIG.YML
+===========
+# Default config file for UnexCraft
+UnexCraft: UnexCraft Server
+    

@@ -1,0 +1,10 @@
+name: NoBadWord
+main: ca.unex.nobadword.Main
+version: 1.0.6
+description: >
+             UnexCraft official AntiSwear plugin
+commands:
+  badword:
+    description: Adds a badword to the blacklist
+  badwords:
+    description: List words you shouldn't say!

@@ -1,0 +1,32 @@
+#Default Bad Words
+#WARNING: Never add special Characters here or it will corrupt BadWords detection!
+ServerName: UnexCraft
+Badwords:
+- fuck
+- ass
+- nigga
+- nigger
+- bitch
+- asshole
+- motherfucker
+- modafucka
+- dick
+- nigger
+- slut
+- cum
+- biatch
+- motherfuckin
+- motherfucking
+- m0therfucker
+- m0therfuck3r
+- motherfuck3r
+- dickhead
+- dickheads
+- dumbass
+- assholes
+- bitches
+- biatches
+- dicks
+- fucker
+- fuckers
+- motherfuckers
