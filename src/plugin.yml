@@ -1,6 +1,6 @@
 name: NoBadWord
 main: ca.unex.nobadword.Main
-version: 1.0.8
+version: 1.1.5
 description: >
              UnexCraft official AntiSwear plugin
 commands:

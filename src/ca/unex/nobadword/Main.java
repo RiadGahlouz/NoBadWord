@@ -1,8 +1,5 @@
 package ca.unex.nobadword;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.logging.Level;
@@ -14,8 +11,6 @@ import org.bukkit.Effect;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -28,12 +23,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class Main extends JavaPlugin implements Listener{
 	public static Logger logger;
 	public static Main plugin;
-	public String UnexCraftMessage = ChatColor.RED+"["+ChatColor.DARK_AQUA+getCustomConfig("language.yml").getString("ServerName")+ChatColor.RED+"] ";
+	public String UnexCraftMessage = ChatColor.RED+"["+ChatColor.DARK_AQUA+getConfig().getString("ServerName")+ChatColor.RED+"] "+ChatColor.WHITE;
 	public static String AdminMessage = ChatColor.RED+"["+ChatColor.DARK_AQUA+"Admin"+ChatColor.RED+"] ";
-	//Config Files
-	private FileConfiguration customConfig = null;
-	private File customConfigFile = null;
-	
+
 	@Override
 	public void onEnable(){
 		logger = getLogger();
@@ -44,12 +36,8 @@ public class Main extends JavaPlugin implements Listener{
 		pm.addPermission(new Permissions().UnexcanListBadWord);
 		pm.addPermission(new Permissions().UnexcanSwear);
                 //pm.addPermission(new Permissions().UnexcanReloadNBW);
-		reloadCustomConfig("badwords.yml");
-		getCustomConfig("badwords.yml").options().copyDefaults(true);
-		saveCustomConfig("badwords.yml");
-                reloadCustomConfig("language.yml");
-                getCustomConfig("language.yml").options().copyDefaults(true);
-                saveCustomConfig("language.yml");
+                getConfig().options().copyDefaults(true);
+                saveDefaultConfig();
 		//saveDefaultConfig();
 		logger.log(Level.INFO, "{0} Version {1} is ON!", new Object[]{pdffile.getName(), pdffile.getVersion()});
 	}
@@ -60,8 +48,7 @@ public class Main extends JavaPlugin implements Listener{
 		getServer().getPluginManager().removePermission(new Permissions().UnexcanListBadWord);
 		getServer().getPluginManager().removePermission(new Permissions().UnexcanSwear);
                 //getServer().getPluginManager().removePermission(new Permissions().UnexcanReloadNBW);
-		saveCustomConfig("badwords.yml");
-                saveCustomConfig("language.yml");
+                saveDefaultConfig();
 		logger.log(Level.INFO, "{0} is OFF", pdffile.getName());
 	}
 	@Override
@@ -92,20 +79,20 @@ public class Main extends JavaPlugin implements Listener{
 						player.sendMessage(ChatColor.RED + "Usage: /badword <word>");
 					}else if(args.length == 1){
 						@SuppressWarnings("unchecked")
-						List<String> confList = (List<String>)getCustomConfig("badwords.yml").getList("Badwords");
+						List<String> confList = (List<String>)getConfig().getList("Badwords");
 						if(confList.contains(args[0])){
 							player.sendMessage(AdminMessage + ChatColor.GREEN +"Word \""+ChatColor.YELLOW+args[0]+ChatColor.GREEN +"\" " +ChatColor.RED+"Already exists"+ChatColor.GREEN +" in BadWord List!");
 						}else{
 							confList.add(args[0].toLowerCase());
-							getCustomConfig("badwords.yml").set("Badwords", confList);
-							saveCustomConfig("badwords.yml");
+							getConfig().set("Badwords", confList);
+							saveConfig();
 							player.sendMessage(AdminMessage + ChatColor.GREEN +"Word \""+ChatColor.YELLOW+args[0]+ChatColor.GREEN +"\" has been added to BadWord List!");
 						}
 					}else{
 						player.sendMessage(ChatColor.RED + "Usage: /badword <word>");
 					}
 				}else{
-					player.sendMessage(UnexCraftMessage + getCustomConfig("language.yml").getString("NoPermission"));
+					player.sendMessage(UnexCraftMessage + this.getConfig().getString("Language.NoPermission"));
 				}
 			}else{
                             Bukkit.getConsoleSender().sendMessage(MessageFormat.format("{0}You must execute this commande {1}In-Game!",ChatColor.GREEN,ChatColor.RED));
@@ -119,11 +106,11 @@ public class Main extends JavaPlugin implements Listener{
 				Player player = (Player) sender;
 				if(sender.hasPermission(new Permissions().UnexcanListBadWord)){
 					if(args.length == 0){
-						player.sendMessage(getCustomConfig("badwords.yml").getList("Badwords").toString());					}else{
+						player.sendMessage(getConfig().getList("Badwords").toString());					}else{
 						player.sendMessage(ChatColor.RED + "No args needed! Usage: /badwords");
 					}
 				}else{
-					player.sendMessage(UnexCraftMessage + ChatColor.RED + "You don't have permission to perform this command!");
+					player.sendMessage(UnexCraftMessage + this.getConfig().getString("Language.NoPermission"));
 				}
 			}else{
                             Bukkit.getConsoleSender().sendMessage(MessageFormat.format("{0}You must execute this commande {1}In-Game!",ChatColor.GREEN,ChatColor.RED));
@@ -138,72 +125,42 @@ public class Main extends JavaPlugin implements Listener{
     @EventHandler(priority = EventPriority.HIGH)
 	public void onPlayerChat(final AsyncPlayerChatEvent event){
             if(!event.getPlayer().hasPermission(new Permissions().UnexcanSwear)){
-                List<String> badwords  =(List<String>) (getCustomConfig("badwords.yml").getList("Badwords"));
+                List<String> badwords  =(List<String>) (getConfig().getList("Badwords"));
                 for (String badword : badwords) {
                     String playerMessage = event.getMessage().toLowerCase();
                     if(playerMessage.matches("(.* )?"+badword+"( .*)?")){
                         Player player = event.getPlayer();
-                        //player.performCommand(badword);
                         event.setCancelled(true);
-                        //event.setMessage("*Censored*");
                         player.getWorld().playEffect(player.getLocation(), Effect.MOBSPAWNER_FLAMES,10,10);
                         player.getWorld().playSound(player.getLocation(), Sound.FIREWORK_LARGE_BLAST2, 100,100);
-                        player.sendMessage(ChatColor.RED + "You're in " + ChatColor.YELLOW + "jail" + ChatColor.RED+". Stop Swearing!");
-                        getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable(){
-                        @Override
-                        public void run(){
-                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "jail "+event.getPlayer().getName() + " jail "+getCustomConfig("badwords.yml").getInt("JailTime"));
-                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mute "+event.getPlayer().getName()+" "+getCustomConfig("badwords.yml").getInt("MuteTime"));
+                        player.sendMessage(this.getConfig().getString("Language.Jailed"));
+                        if(getConfig().getBoolean("UseCustomCommand")){
+                          final List<String> commandList = (List<String>) getConfig().getList("Commands");
+                          getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable(){
+                            @Override
+                            public void run() {
+                              for(String command : commandList){
+                                command = command.replace("@p", event.getPlayer().getName());
+                                command = command.replace("@s", getConfig().getString("ServerName"));
+                                command = command.replace("@w", event.getPlayer().getWorld().getName());
+                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+                              }
+                            }
+                          
+                          },10L);
+                        }else{
+                          getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable(){
+                          @Override
+                          public void run(){
+                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "jail "+event.getPlayer().getName() + " jail "+getConfig().getInt("JailTime"));
+                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mute "+event.getPlayer().getName()+" "+getConfig().getInt("MuteTime"));
+                          }
+                          },10L);
                         }
-                        },10L);                        
                         break;
                     }
                 }
             }
-	}
-        
-        /*
-	 * Config Methods
-	 */
-	public void reloadCustomConfig(String confName) {
-	    if (customConfigFile == null) {
-	    customConfigFile = new File(getDataFolder(), confName);
-	    }
-	    customConfig = YamlConfiguration.loadConfiguration(customConfigFile);
-	 
-	    // Look for defaults in the jar
-	    InputStream defConfigStream = this.getResource(confName);
-	    if (defConfigStream != null) {
-	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
-	        customConfig.setDefaults(defConfig);
-	    }
-	}
-	
-	public FileConfiguration getCustomConfig(String confName) {
-	    if (customConfig == null) {
-	        reloadCustomConfig(confName);
-	    }
-	    return customConfig;
-	}
-	
-	public void saveCustomConfig(String confName) {
-	    if (customConfig == null || customConfigFile == null) {
-	        return;
-	    }
-	    try {
-	        getCustomConfig(confName).save(customConfigFile);
-	    } catch (IOException ex) {
-	        getLogger().log(Level.SEVERE, "Could not save config to " + customConfigFile, ex);
-	    }
-	}
-	
-        	public void saveDefaultConfig(String confName) {
-	    if (customConfigFile == null) {
-	        customConfigFile = new File(getDataFolder(), confName);
-	    }
-	    if (!customConfigFile.exists()) {            
-	         plugin.saveResource(confName, false);
-	     }
 	}
 
 }

@@ -1,3 +1,58 @@
-# Default config file for UnexCraft
-NoBadWordAuthor: UnexTeam
-    
+#Author: UltimateGamer84
+#ServerName: [YOUR SEVER NAME HERE]
+ServerName: UnexCraft
+
+#Here you can customize messages (and translate them)
+Language:
+  NoPermission: You don't have permission to perform this command!
+  Jailed: You're in Jail. Stop Swearing!
+
+#Time bad players should be jailed (in seconds) Default:60 and Muted Default:90
+JailTime: 60
+MuteTime: 90
+#======================
+#CUSTOM SERVER COMMANDS
+#======================
+
+#If you want to use Custom Commands set to "true"
+#TIPS:
+#@p will be replaced by the Player Name
+#@s will be replaced by the Server Name
+#@w will be replaced by the World Name
+UseCustomCommand: false
+#add Commands without / (e.g: "kick" instead of "/kick")
+Commands:
+  - say Stop swearing @p !
+  - kick @p Stop Swearing!
+
+#Default Bad Words
+#WARNING: Never add special Characters here or it will corrupt BadWords detection!
+Badwords:
+- fuck
+- ass
+- nigga
+- nigger
+- bitch
+- asshole
+- motherfucker
+- modafucka
+- dick
+- nigger
+- slut
+- cum
+- biatch
+- motherfuckin
+- motherfucking
+- m0therfucker
+- m0therfuck3r
+- motherfuck3r
+- dickhead
+- dickheads
+- dumbass
+- assholes
+- bitches
+- biatches
+- dicks
+- fucker
+- fuckers
+- motherfuckers
