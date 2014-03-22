@@ -10,6 +10,10 @@ Language:
 #Time bad players should be jailed (in seconds) Default:60 and Muted Default:90
 JailTime: 60
 MuteTime: 90
+#Here you can set World where players can swear freely!
+#Very useful for Hub Servers
+WorldsToIgnore:
+  - quake
 #======================
 #CUSTOM SERVER COMMANDS
 #======================

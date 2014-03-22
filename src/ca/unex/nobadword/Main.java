@@ -147,7 +147,7 @@ public class Main extends JavaPlugin implements Listener{
                               }
                             }
                           
-                          },10L);
+                          },5L);
                         }else{
                           getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable(){
                           @Override
